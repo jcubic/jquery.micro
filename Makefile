@@ -3,7 +3,7 @@ JSC=java -jar ~/bin/closure.bin/compiler.jar --js
 SED=sed
 CP=cp
 
-ALL: README.md js/jquery.micro-$(VERSION).js js/jquery.micro-$(VERSION).min.js micro.jquery.json
+ALL: README.md js/jquery.micro-$(VERSION).js js/jquery.micro-$(VERSION).min.js js/jquery.terminal-min.js micro.jquery.json 
 
 README.md: README.in
 	$(SED) -e "s/{{V}}/$(VERSION)/g" < README.in > README.md
