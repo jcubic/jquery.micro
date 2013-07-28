@@ -1,0 +1,23 @@
+.micro {
+    color: #aaa;
+    background: #000;
+    position: relative;
+    font-family: FreeMono, monospace;
+    font-size: 12px;
+    line-height: 14px;
+    overflow: hidden;
+    border: 1px solid #000;
+}
+.micro .title, .micro .footer .keys, .micro .message span {
+    background-color: #fff;
+    color: #000;
+}
+.micro .message {
+    position: relative;
+    left: 0;
+    bottom: 42px;
+}
+.micro .message span {
+    text-aling: center;
+    
+}

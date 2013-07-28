@@ -1,0 +1,26 @@
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>jQuery Micro Editor Demo</title>
+    <meta name="Description" content="Demo of jQuery micro - pico/nano like editor"/>
+    <!--[if IE]>
+    <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <script src="js/jquery-1.10.1.js"></script>
+    <script src="js/micro-src.js"></script>
+    <link href="css/micro.css" rel="stylesheet"/>
+    <script>
+$(function() {
+    $('#editor').micro({
+        width: 500,
+        height: 300
+	});
+	$('#editor').micro('open', 'demo.html');
+});
+    </script>
+</head>
+<body>
+    <div id="editor"></div>
+</body>
+</html>
