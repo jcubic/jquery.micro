@@ -61,6 +61,7 @@
         this._focus = settings.enabled;
         $(document).bind('keydown.micro', function(e) {
             if (self._focus) {
+                e.preventDefault();
                 if (e.which === 37) { // left
                     if (self._pointer.x > 0) {
                         self._set_pointer(self._pointer.x-1, self._pointer.y);
