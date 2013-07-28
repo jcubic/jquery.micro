@@ -23,5 +23,5 @@ micro.jquery.json: manifest ~$(VERSION)
 ~$(VERSION):
 	touch ~$(VERSION)
 
-www/Makefile: Makefile
+www/Makefile: Makefile www/Makefile.in
 	$(SED) -e "s/{{VERSION}}/$(VERSION)/g" www/Makefile.in > www/Makefile
