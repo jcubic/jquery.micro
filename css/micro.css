@@ -17,7 +17,15 @@
     left: 0;
     bottom: 42px;
 }
+.micro .clipboard {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    opacity: 0.01;
+    filter: alpha(opacity = 0.01);
+    filter: progid:DXImageTransform.Microsoft.Alpha(opacity=0.01);
+    width: 2px;
+}
 .micro .message span {
     text-aling: center;
-    
 }

@@ -30,14 +30,15 @@
     // -----------------------------------------------------------------------
     function micro(root, settings) {
         this._root = $(root);
-        this._letter = this.calculate_letter_size();
+        this._letter = this._calculate_letter_size();
         this._root.addClass('micro');
         this._root.css({
             width: settings.width,
             height: settings.height
         });
+        this._settings = settings;
         this._title = $('<div/>').addClass('title').appendTo(this._root);
-        this.set_file_name('');
+        this._set_file_name('');
         $('<div>&nbsp;</div>').addClass('spacer').appendTo(this._root);
         this._table = $('<div/>').addClass('matrix');
         this.refresh();
@@ -50,27 +51,37 @@
                 this._matrix[i][j] = cell;
             }
         }
-        this._cursor = {x:0, y:0};
+        this._pointer = {x:0, y:0};
         this._table.appendTo(this._root);
         this._footer = $('<div/>').addClass('footer').appendTo(this._root);
         this._message = $('<div/>').addClass('message').append('<span/>').
             appendTo(this._root).find('span');
         this._lines = [''];
-        this._set_cursor(0, 0);
+        this._offset = 0;
+        this._page = 0;
+        this._set_pointer(0, 0);
         var self = this;
         $(document).bind('keydown.micro', function(e) {
             if (e.which === 37) { // left
-                self._set_cursor(self._cursor.x-1, self._cursor.y);
+                if (self._pointer.x > 0) {
+                    self._set_pointer(self._pointer.x-1, self._pointer.y);
+                }
             } else if (e.which === 38) { // top
-                self._set_cursor(self._cursor.x, self._cursor.y-1);
+                if (self._pointer.y > 0) {
+                    self._set_pointer(self._pointer.x, self._pointer.y-1);
+                }
             } else if (e.which === 39) { // right
-                self._set_cursor(self._cursor.x+1, self._cursor.y);
+                if (self._pointer.x < self._lines[self._pointer.y].length) {
+                    self._set_pointer(self._pointer.x+1, self._pointer.y);
+                }
             } else if (e.which === 40) { // down
-                self._set_cursor(self._cursor.x, self._cursor.y+1);
+                if (self._pointer.y < self._lines.length) {
+                    self._set_pointer(self._pointer.x, self._pointer.y+1);
+                }
             } else if (e.which === 35) { //end
-                self._set_cursor(self._lines[self._cursor.y].length, self._cursor.y);
+                self._set_pointer(self._lines[self._pointer.y].length, self._pointer.y);
             } else if (e.which === 36) { //home
-                self._set_cursor(0, self._cursor.y);
+                self._set_pointer(0, self._pointer.y);
             }
         });
     }
@@ -91,42 +102,106 @@
         text: function() {
             return this._lines.join('\n');
         },
-        _set_cursor: function(x, y) {
+        page: function() {
+            return Math.floor((this._offset + this._settings.verticalMoveOffset) / this._rows);
+        },
+        _set_pointer: function(x, y) {
+            if (y >= this._lines.length) {
+                throw "Out of band";
+            }
             this._table.find('.cursor').removeClass('cursor');
-            if (x > this._cols) {
-                if (x > this._lines[y].length) {
-                    throw "Can't get that far";
+            var cursor_y;
+            if (y >= this._rows) {
+                var multiplier = Math.floor(y / (this._rows-1));
+                var new_offset = (this._rows - this._settings.verticalMoveOffset) * multiplier;
+                if (this._offset !== new_offset) {
+                    this._view(new_offset);
+                }
+                cursor_y = (y % this._rows) + this._settings.verticalMoveOffset;
+            } else {
+                if (y <= this._rows - this._settings.verticalMoveOffset - 1 &&
+                   this._offset !== 0) {
+                    this._pointer.x = x;
+                    this._pointer.y = y;
+                    this._view(0);
+                    cursor_y = y;
+                } else if (this._offset !== 0) {
+                    cursor_y = (y - this._settings.verticalMoveOffset) + 1;
                 } else {
-                    // line continue mode
+                    cursor_y = y;
+                }
+            }
+            if (x >= this._cols-1) {
+                if (x > this._lines[y].length) {
+                    this._set_pointer(this._lines[y].length, y);
+                } else {
+                    // need to set them before because they are used by a function
+                    this._pointer.x = x;
+                    this._pointer.y = y;
+                    this._draw_pointer_line();
                 }
             } else {
-                if (x > this._lines[y].length) {
-                    this._matrix[y][this._lines[y].length].addClass('cursor');
-                } else {
-                    this._matrix[y][x].addClass('cursor');
+                if (this._pointer.x >= this._cols-1) {
+                    this._draw_line(this._pointer.y-this._offset, this._lines[this._pointer.y]);
                 }
-                this._cursor.x = x;
-                this._cursor.y = y;
+                if (x > this._lines[y].length) {
+                    this._matrix[cursor_y][this._lines[y].length].addClass('cursor');
+                } else {
+                    this._matrix[cursor_y][x].addClass('cursor');
+                }
+            }
+            this._pointer.x = x;
+            this._pointer.y = y;
+        },
+        _encode: function(string) {
+            return string.replace(' ', '&nbsp;').
+                replace('\t', '&nbsp;&nbsp;&nbsp;&nbsp;');
+        },
+        _draw_line: function(n, line) {
+            var len = line.length > this._cols ? this._cols : line.length, i;
+            for (i = 0; i < len; ++i) {
+                this._matrix[n][i].html(this._encode(line[i]));
+            }
+            if (line.length > this._cols) {
+                this._matrix[n][this._cols-1].html('$');
+            } else {
+                for (i = line.length; i < this._cols; ++i) {
+                    this._matrix[n][i].html('&nbsp');
+                }
+            }
+        },
+        _draw_pointer_line: function() {
+            var y = this._pointer.y - this._offset;
+            var line = this._lines[y];
+            if (this._pointer.x >= this._cols-1) {
+                if (this._pointer.x > line.length) {
+                    throw "Out of bound";
+                } else {
+                    var multiplier = Math.floor(this._pointer.x / (this._cols-1));
+                    var start = (this._cols - this._settings.horizontalMoveOffset - 1) *
+                        multiplier;
+                    this._draw_line(y, '$' + line.substring(start, start+this._cols));
+                    var x_offset = (this._pointer.x % (this._cols-1)) +
+                        this._settings.horizontalMoveOffset + 1;
+                    this._matrix[y][x_offset].addClass('cursor');
+                }
             }
         },
         _view: function(offset) {
             if (this._lines) {
+                this._offset = offset;
                 var lines = this._lines.slice(offset, offset+this._rows), i;
-                var cursor_y = this._cursor.y-offset;
-                if (lines[cursor_y].length > this._cols && this._cursor.x > this._cols) {
+                var cursor_y = this._pointer.y-offset;
+                if (lines[cursor_y].length > this._cols && this._pointer.x > this._cols) {
                     for (i = 0; i < cursor_y; ++i) {
+                        this._draw_line(i, lines[i]);
                     }
                     // cursor line
                     for (i = cursor_y+1; i < lines.length; ++i) {
+                        this._draw_line(i, lines[i]);
                     }
                 } else {
-                    var self = this;
-                    $.each(lines, function(i, line) {
-                        var len = line.length > self._cols ? self._cols : line.length;
-                        for (var ch=0; ch<len; ++ch) {
-                            self._matrix[i][ch].html(line[ch].replace(' ', '&nbsp;'));
-                        }
-                    });
+                    $.each(lines, this._draw_line.bind(this));
                 }
             }
             return this;
@@ -134,7 +209,7 @@
         version: function() {
             return '{{VER}}';
         },
-        set_file_name: function(fname) {
+        _set_file_name: function(fname) {
             var text = '  jQuery Micro ' + this.version();
             text += str_repeat(' ', 30-text.length) + $.micro.strings.file + ': ' + fname;
             this._title.html(text.replace(/ /g, '&nbsp;'));
@@ -145,13 +220,13 @@
         open: function(fname) {
             var self = this;
             $.get(fname, function(text) {
-                self.set_file_name(fname);
+                self._set_file_name(fname);
                 self._lines = text.split('\n');
                 self._view(0);
             });
             return this;
         },
-        calculate_letter_size: function() {
+        _calculate_letter_size: function() {
             var $temp = $('<div class="micro"><div><span>&nbsp;</span></div></div>').
                 appendTo('body');
             var width = $temp.find('span').width();
@@ -167,7 +242,9 @@
     $.micro = {
         defaults: {
             width: '100%',
-            height: '400px'
+            height: '400px',
+            verticalMoveOffset: 9, // when you move cursor out of editor verticaly
+            horizontalMoveOffset: 6 // when you move cursor out of line
         },
         strings: {
             file: 'File'
@@ -180,10 +257,14 @@
         if (typeof arg === 'string') {
             var args = Array.prototype.slice.call(arguments);
             args.shift();
-            return $.each(this, function() {
-                var micro = $(this).data('micro');
-                $.micro.fn[arg].apply(micro, args);
-            });
+            if (arg[0] !== '_' && typeof $.micro.fn[arg] === 'function') {
+                return $.each(this, function() {
+                    var micro = $(this).data('micro');
+                    $.micro.fn[arg].apply(micro, args);
+                });
+            } else {
+                return this;
+            }
         } else {
             var settings = $.extend({}, $.micro.defaults, arg);
             $.each(this, function() {
