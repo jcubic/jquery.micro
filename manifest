@@ -2,7 +2,7 @@
     "name": "micro",
     "title": "jQuery Micro",
     "description": "jQuery Micro is Pico/Nano like editor",
-    "version": "{{V}",
+    "version": "{{V}}",
     "keywords": [
         "editor", "terminal", "console", "keyboard", "type", "input", "ui"
     ],
