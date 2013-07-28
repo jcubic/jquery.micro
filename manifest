@@ -16,8 +16,9 @@
         "url": "http://www.gnu.org/copyleft/gpl.html"
     }],
     "homepage": "http://micro.jcubic.pl/",
+    "demo": "http://micro.jcubic.pl/#demo",
     "bugs": "https://github.com/jcubic/micro/issues",
-    "download": "https://github.com/jcubic/micro/tarball/master",
+    "download": "http://micro.jcubic.pl/js/jquery.micro-{{V}}.js",
     "dependencies": {
         "jquery": ">=1.5"
     }

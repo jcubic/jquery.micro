@@ -12,7 +12,7 @@
  * Licensed under GNU GPL Version 3 license
  * Copyright (c) 2013 Jakub Jankiewicz <http://jcubic.pl>
  *
- * Date: Sun, 28 Jul 2013 18:45:22 +0000
+ * Date: Sun, 28 Jul 2013 19:05:27 +0000
  */
 (function($, undefined) {
     // -----------------------------------------------------------------------
@@ -63,7 +63,7 @@
         var self = this;
         this._focus = settings.enabled;
         $(document).bind('keydown.micro', function(e) {
-            if (self.focus) {
+            if (self._focus) {
                 if (e.which === 37) { // left
                     if (self._pointer.x > 0) {
                         self._set_pointer(self._pointer.x-1, self._pointer.y);
