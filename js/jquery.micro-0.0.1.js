@@ -12,7 +12,7 @@
  * Licensed under GNU GPL Version 3 license
  * Copyright (c) 2013 Jakub Jankiewicz <http://jcubic.pl>
  *
- * Date: Sun, 28 Jul 2013 19:05:27 +0000
+ * Date: Sun, 28 Jul 2013 19:24:00 +0000
  */
 (function($, undefined) {
     // -----------------------------------------------------------------------

@@ -13,7 +13,7 @@
  Licensed under GNU GPL Version 3 license
  Copyright (c) 2013 Jakub Jankiewicz <http://jcubic.pl>
 
- Date: Sun, 28 Jul 2013 19:05:27 +0000
+ Date: Sun, 28 Jul 2013 19:24:00 +0000
 */
 (function(e){function h(a,b){this._root=e(a);this._letter=this._calculate_letter_size();this._root.addClass("micro");this._root.css({width:b.width,height:b.height});this._settings=b;this._title=e("<div/>").addClass("title").appendTo(this._root);this._set_file_name("");e("<div>&nbsp;</div>").addClass("spacer").appendTo(this._root);this._table=e("<div/>").addClass("matrix");this.refresh();this._matrix=[];for(var c=0;c<this._rows;++c){var f=e("<div/>").addClass("line").appendTo(this._table);this._matrix[c]=
 [];for(var i=0;i<this._cols;++i){var j=e("<span>&nbsp;</span>").appendTo(f);this._matrix[c][i]=j}}this._pointer={x:0,y:0};this._table.appendTo(this._root);this._footer=e("<div/>").addClass("footer").appendTo(this._root);this._message=e("<div/>").addClass("message").append("<span/>").appendTo(this._root).find("span");this._lines=[""];this._page=this._offset=0;this._set_pointer(0,0);var d=this;this._focus=b.enabled;e(document).bind("keydown.micro",function(g){if(d._focus)if(g.which===37)d._pointer.x>
