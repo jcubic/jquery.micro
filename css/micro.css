@@ -8,7 +8,7 @@
     overflow: hidden;
     border: 1px solid #000;
 }
-.micro .title, .micro .footer .keys, .micro .message span {
+.micro .title, .micro .footer .keys, .micro .message span, .micro .cursor {
     background-color: #fff;
     color: #000;
 }
