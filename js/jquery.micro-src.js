@@ -61,32 +61,57 @@
         this._page = 0;
         this._set_pointer(0, 0);
         var self = this;
+        this._focus = settings.enabled;
         $(document).bind('keydown.micro', function(e) {
-            if (e.which === 37) { // left
-                if (self._pointer.x > 0) {
-                    self._set_pointer(self._pointer.x-1, self._pointer.y);
+            if (self.focus) {
+                if (e.which === 37) { // left
+                    if (self._pointer.x > 0) {
+                        self._set_pointer(self._pointer.x-1, self._pointer.y);
+                    }
+                } else if (e.which === 38) { // top
+                    if (self._pointer.y > 0) {
+                        self._set_pointer(self._pointer.x, self._pointer.y-1);
+                    }
+                } else if (e.which === 39) { // right
+                    if (self._pointer.x < self._lines[self._pointer.y].length) {
+                        self._set_pointer(self._pointer.x+1, self._pointer.y);
+                    }
+                } else if (e.which === 40) { // down
+                    if (self._pointer.y < self._lines.length) {
+                        self._set_pointer(self._pointer.x, self._pointer.y+1);
+                    }
+                } else if (e.which === 35) { //end
+                    self._set_pointer(self._lines[self._pointer.y].length, self._pointer.y);
+                } else if (e.which === 36) { //home
+                    self._set_pointer(0, self._pointer.y);
                 }
-            } else if (e.which === 38) { // top
-                if (self._pointer.y > 0) {
-                    self._set_pointer(self._pointer.x, self._pointer.y-1);
-                }
-            } else if (e.which === 39) { // right
-                if (self._pointer.x < self._lines[self._pointer.y].length) {
-                    self._set_pointer(self._pointer.x+1, self._pointer.y);
-                }
-            } else if (e.which === 40) { // down
-                if (self._pointer.y < self._lines.length) {
-                    self._set_pointer(self._pointer.x, self._pointer.y+1);
-                }
-            } else if (e.which === 35) { //end
-                self._set_pointer(self._lines[self._pointer.y].length, self._pointer.y);
-            } else if (e.which === 36) { //home
-                self._set_pointer(0, self._pointer.y);
+            }
+        }).bind('click.micro', function(e) {
+            var maybe_micro = $(e.target).parents('.micro');
+            if (maybe_micro.length) {
+                maybe_micro.data('micro').focus(true);
+            } else {
+                self.focus(false);
             }
         });
     }
     // -----------------------------------------------------------------------
     micro.prototype = {
+        focus: function(toggle) {
+            if (toggle === true || typeof toggle === 'undefined') {
+                this._focus = true;
+                this._table.find('.cursor').removeClass('inactive').css({
+                    width: '',
+                    height: ''
+                });
+            } else {
+                this._focus = false;
+                this._table.find('.cursor').addClass('inactive').css({
+                    width: this._letter.width-2,
+                    height: this._letter.height-2
+                });
+            }
+        },
         destroy: function() {
             this._root.removeData('micro').removeClass('micro');
             this._table.remove();
@@ -241,6 +266,7 @@
     // -----------------------------------------------------------------------
     $.micro = {
         defaults: {
+            enabled: true,
             width: '100%',
             height: '400px',
             verticalMoveOffset: 9, // when you move cursor out of editor verticaly

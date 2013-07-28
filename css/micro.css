@@ -12,6 +12,12 @@
     background-color: #fff;
     color: #000;
 }
+.micro .cursor.inactive {
+    background-color: #000;
+    border: 1px solid green;
+    display: block;
+    float: left;
+}
 .micro .message {
     position: relative;
     left: 0;
