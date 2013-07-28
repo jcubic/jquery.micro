@@ -7,6 +7,8 @@
 
 Pico/Nano like editor for jquery.</pre>
 
+<http://micro.jcubic.pl>
+
 Licensed under [GNU GPL Version 3 license](http://www.gnu.org/copyleft/gpl.html)
 
 Copyright (c) 2013 [Jakub Jankiewicz](http://jcubic.pl)

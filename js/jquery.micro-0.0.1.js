@@ -1,9 +1,6 @@
 /**@license
- *| _ __ ___ (_) ___ _ __ ___
- *|| '_ ` _ \| |/ __| '__/ _ \
- *|| | | | | | | (__| | | (_) |
- *||_| |_| |_|_|\___|_|  \___/
- *|               version 0.0.1
+ *
+ * jQuery Micro version 0.0.1
  *
  * Pico/Nano like editor for jquery
  *
@@ -12,7 +9,7 @@
  * Licensed under GNU GPL Version 3 license
  * Copyright (c) 2013 Jakub Jankiewicz <http://jcubic.pl>
  *
- * Date: Sun, 28 Jul 2013 19:24:00 +0000
+ * Date: Sun, 28 Jul 2013 19:52:44 +0000
  */
 (function($, undefined) {
     // -----------------------------------------------------------------------
@@ -232,7 +229,7 @@
             return this;
         },
         version: function() {
-            return '{{VER}}';
+            return '0.0.1';
         },
         _set_file_name: function(fname) {
             var text = '  jQuery Micro ' + this.version();

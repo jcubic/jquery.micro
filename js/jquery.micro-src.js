@@ -1,9 +1,6 @@
 /**@license
- *| _ __ ___ (_) ___ _ __ ___
- *|| '_ ` _ \| |/ __| '__/ _ \
- *|| | | | | | | (__| | | (_) |
- *||_| |_| |_|_|\___|_|  \___/
- *|               version {{V}}
+ *
+ * jQuery Micro version {{V}}
  *
  * Pico/Nano like editor for jquery
  *
@@ -232,7 +229,7 @@
             return this;
         },
         version: function() {
-            return '{{VER}}';
+            return '{{V}}';
         },
         _set_file_name: function(fname) {
             var text = '  jQuery Micro ' + this.version();
