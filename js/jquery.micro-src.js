@@ -3,6 +3,7 @@
  *|| '_ ` _ \| |/ __| '__/ _ \
  *|| | | | | | | (__| | | (_) |
  *||_| |_| |_|_|\___|_|  \___/
+ *|               version {{V}}
  *
  * Pico/Nano like editor for jquery
  *
@@ -11,6 +12,7 @@
  * Licensed under GNU GPL Version 3 license
  * Copyright (c) 2013 Jakub Jankiewicz <http://jcubic.pl>
  *
+ * Date: {{DATE}}
  */
 (function($, undefined) {
     // -----------------------------------------------------------------------
