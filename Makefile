@@ -3,7 +3,7 @@ JSC=java -jar ~/bin/closure.bin/compiler.jar --js
 SED=sed
 CP=cp
 
-ALL: README.md js/jquery.micro-$(VERSION).js js/jquery.micro-$(VERSION).min.js js/jquery.micro-min.js micro.jquery.json 
+ALL: README.md js/jquery.micro-$(VERSION).js www/Makefile js/jquery.micro-$(VERSION).min.js js/jquery.micro-min.js micro.jquery.json 
 
 README.md: README.in
 	$(SED) -e "s/{{V}}/$(VERSION)/g" < README.in > README.md
@@ -22,3 +22,6 @@ micro.jquery.json: manifest ~$(VERSION)
 
 ~$(VERSION):
 	touch ~$(VERSION)
+
+www/Makefile: Makefile
+	$(SED) -e "s/{{VERSION}}/$(VERSION)/g" www/Makefile.in > www/Makefile
