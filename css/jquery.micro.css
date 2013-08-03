@@ -12,6 +12,9 @@
     background-color: #fff;
     color: #000;
 }
+.micro .matrix, .micro .matrix .line {
+    float: left;
+}
 .micro .line span {
     display: block;
     float: left;
@@ -20,10 +23,11 @@
     background-color: #000;
     border: 1px solid green;
 }
-.micro .message {
-    position: relative;
-    left: 0;
-    bottom: 42px;
+.micro footer {
+    height: 28px;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
 }
 .micro .clipboard {
     position: absolute;
@@ -34,6 +38,14 @@
     filter: progid:DXImageTransform.Microsoft.Alpha(opacity=0.01);
     width: 2px;
 }
+.micro .message {
+    position: absolute;
+    left: 50%;
+    bottom: 34px;
+}
 .micro .message span {
-    text-aling: center;
+    height: 14px;
+    float: left;
+    position: relative;
+    left: -50%;
 }
