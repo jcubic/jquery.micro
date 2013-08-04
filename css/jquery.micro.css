@@ -36,10 +36,17 @@
     position: absolute;
     bottom: 0;
     left: 0;
+    width: 2px;
+}
+.micro .clipboard, .micro .spacer input {
     opacity: 0.01;
     filter: alpha(opacity = 0.01);
     filter: progid:DXImageTransform.Microsoft.Alpha(opacity=0.01);
-    width: 2px;
+}
+.micro .spacer input {
+    outline: none;
+    border: none;
+    height: 14px;
 }
 .micro .message {
     position: absolute;

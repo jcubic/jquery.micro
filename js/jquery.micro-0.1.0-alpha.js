@@ -13,7 +13,7 @@
  * sprintf.js: Copyright (c) 2007-2013 Alexandru Marasteanu <hello at alexei dot ro>
  * licensed under 3 clause BSD license
  *
- * Date: Sun, 04 Aug 2013 09:32:53 +0000
+ * Date: Sun, 04 Aug 2013 10:16:18 +0000
  */
 
 // Sprintf
@@ -175,7 +175,8 @@
         this._settings = settings;
         this._title = $('<div/>').addClass('title').appendTo(this._root);
         this._set_file_name('');
-        $('<div>&nbsp;</div>').addClass('spacer').appendTo(this._root);
+        var spacer = $('<div/>').addClass('spacer').appendTo(this._root);
+        this._input = $('<input/>').appendTo(spacer);
         this._table = $('<div/>').addClass('matrix');
         this.refresh();
         this._matrix = [];
@@ -196,31 +197,35 @@
         this._offset = 0;
         this._page = 0;
         var self = this;
-        this._focus = settings.enabled;
-        $(document).bind('keydown.micro', function(e) {
+        this._input.bind('keydown.micro', function(e) {
             if (self._focus) {
-                e.preventDefault();
                 var line = self._lines[self._pointer.y];
                 if (e.which === 37) { // left
                     if (self._pointer.x > 0) {
                         self._set_pointer(self._pointer.x-1, self._pointer.y);
                     }
+                    return false;
                 } else if (e.which === 38) { // top
                     if (self._pointer.y > 0) {
                         self._set_pointer(self._pointer.x, self._pointer.y-1);
                     }
+                    return false;
                 } else if (e.which === 39) { // right
                     if (self._pointer.x < self._lines[self._pointer.y].length) {
                         self._set_pointer(self._pointer.x+1, self._pointer.y);
                     }
+                    return false;
                 } else if (e.which === 40) { // down
                     if (self._pointer.y < self._lines.length-1) {
                         self._set_pointer(self._pointer.x, self._pointer.y+1);
                     }
+                    return false;
                 } else if (e.which === 35) { //end
                     self._set_pointer(self._lines[self._pointer.y].length, self._pointer.y);
+                    return false;
                 } else if (e.which === 36) { //home
                     self._set_pointer(0, self._pointer.y);
+                    return false;
                 } else if (e.which === 8) { // backspace
                     if (self._pointer.x > 0) {
                         var x = self._pointer.x > line.length ? line.length : self._pointer.x;
@@ -251,7 +256,14 @@
                     self._view(self._offset);
                 }
             }
-        }).bind('click.micro', function(e) {
+        }).bind('keypress.micro', function(e) {
+            if (!e.ctrlKey) {
+                var chr = String.fromCharCode(e.which);
+                self.insert(chr);
+            }
+            e.preventDefault();
+        })
+        $(document).bind('click.micro', function(e) {
             var maybe_micro = $(e.target).parents('.micro');
             if (maybe_micro.length) {
                 maybe_micro.data('micro').focus(true);
@@ -259,9 +271,23 @@
                 self.focus(false);
             }
         });
+        this.focus(settings.enabled);
     }
     // -----------------------------------------------------------------------
     micro.prototype = {
+        insert: function(string) {
+            var lines = string.split('\n');
+            var line = this._lines[this._pointer.y];
+            if (lines.length == 1) {
+                this._lines[this._pointer.y] = line.slice(0, this._pointer.x) +
+                    string + line.slice(this._pointer.x);
+                console.log(this._lines[this._pointer.y]);
+                this._set_pointer(this._pointer.x+string.length, this._pointer.y);
+                this._draw_cursor_line();
+            } else {
+                
+            }
+        },
         focus: function(toggle) {
             if (toggle === true || typeof toggle === 'undefined') {
                 this._focus = true;
@@ -269,6 +295,7 @@
                     width: '',
                     height: ''
                 });
+                this._input.focus();
             } else {
                 this._focus = false;
                 this._table.find('.cursor').addClass('inactive').css({
