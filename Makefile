@@ -1,11 +1,11 @@
-VERSION=0.1-alpha
+VERSION=0.1.0-alpha
 JSC=java -jar ~/bin/closure.bin/compiler.jar --js
 SED=sed
 CP=cp
 
-ALL: README.md js/jquery.micro-$(VERSION).js www/Makefile js/jquery.micro-$(VERSION).min.js js/jquery.micro-min.js micro.jquery.json 
+ALL: ~$(VERSION) README.md js/jquery.micro-$(VERSION).js www/Makefile js/jquery.micro-$(VERSION).min.js js/jquery.micro-min.js micro.jquery.json 
 
-README.md: README.in
+README.md: README.in ~$(VERSION)
 	$(SED) -e "s/{{V}}/$(VERSION)/g" < README.in > README.md
 
 js/jquery.micro-$(VERSION).js: js/jquery.micro-src.js ~$(VERSION)

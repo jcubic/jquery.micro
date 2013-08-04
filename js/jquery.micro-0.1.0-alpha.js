@@ -1,6 +1,6 @@
 /**@license
  *
- * jQuery Micro version 0.0.1
+ * jQuery Micro version 0.1.0-alpha
  *
  * Pico/Nano like editor for jquery
  *
@@ -13,7 +13,7 @@
  * sprintf.js: Copyright (c) 2007-2013 Alexandru Marasteanu <hello at alexei dot ro>
  * licensed under 3 clause BSD license
  *
- * Date: Sat, 03 Aug 2013 13:29:41 +0000
+ * Date: Sun, 04 Aug 2013 08:21:42 +0000
  */
 
 // Sprintf
@@ -381,7 +381,7 @@
             return this;
         },
         version: function() {
-            return '0.0.1';
+            return '0.1.0-alpha';
         },
         _set_file_name: function(fname) {
             var text = '  jQuery Micro ' + this.version();
@@ -422,8 +422,11 @@
             verticalMoveOffset: 9, // when you move cursor out of editor verticaly
             horizontalMoveOffset: 6 // when you move cursor out of line
         },
+        // strings use by editor, can be translated
         strings: {
-            file: 'File'
+            file: 'File',
+            read: 'Read %s Lines',
+            chr: 'line %d/%d (%d%%), col %d/%d (%d%%), char %d/%d (%d%%)'
         },
         init: micro,
         fn: micro.prototype

@@ -2,7 +2,7 @@
     "name": "micro",
     "title": "jQuery Micro",
     "description": "jQuery Micro is Pico/Nano like editor",
-    "version": "0.1-alpha",
+    "version": "0.1.0-alpha",
     "keywords": [
         "editor", "terminal", "console", "keyboard", "type", "input", "ui"
     ],
@@ -18,7 +18,7 @@
     "homepage": "http://micro.jcubic.pl/",
     "demo": "http://micro.jcubic.pl/#demo",
     "bugs": "https://github.com/jcubic/micro/issues",
-    "download": "http://micro.jcubic.pl/js/jquery.micro-0.1-alpha.js",
+    "download": "http://micro.jcubic.pl/js/jquery.micro-0.1.0-alpha.js",
     "dependencies": {
         "jquery": ">=1.5"
     }

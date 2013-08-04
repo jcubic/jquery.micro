@@ -422,8 +422,11 @@
             verticalMoveOffset: 9, // when you move cursor out of editor verticaly
             horizontalMoveOffset: 6 // when you move cursor out of line
         },
+        // strings use by editor, can be translated
         strings: {
-            file: 'File'
+            file: 'File',
+            read: 'Read %s Lines',
+            chr: 'line %d/%d (%d%%), col %d/%d (%d%%), char %d/%d (%d%%)'
         },
         init: micro,
         fn: micro.prototype
