@@ -198,9 +198,9 @@
         var self = this;
         this._focus = settings.enabled;
         $(document).bind('keydown.micro', function(e) {
-            console.log(self._pointer.y + ' / ' + self._lines.length);
             if (self._focus) {
                 e.preventDefault();
+                var line = self._lines[self._pointer.y];
                 if (e.which === 37) { // left
                     if (self._pointer.x > 0) {
                         self._set_pointer(self._pointer.x-1, self._pointer.y);
@@ -221,6 +221,34 @@
                     self._set_pointer(self._lines[self._pointer.y].length, self._pointer.y);
                 } else if (e.which === 36) { //home
                     self._set_pointer(0, self._pointer.y);
+                } else if (e.which === 8) { // backspace
+                    if (self._pointer.x > 0) {
+                        var x = self._pointer.x > line.length ? line.length : self._pointer.x;
+                        self._lines[self._pointer.y] = line.slice(0, x-1) +
+                            line.slice(x, line.length);
+                        self._draw_cursor_line();
+                        self._set_pointer(x-1, self._pointer.y);
+                    } else {
+                        var prev_line = self._lines[self._pointer.y-1];
+                        self._lines = self._lines.slice(0, self._pointer.y-1).
+                            concat(self._lines.slice(self._pointer.y));
+                        self._lines[self._pointer.y-1] = prev_line + line;
+                        self._pointer.y--;
+                        self._pointer.x = prev_line.length;
+                        self._set_pointer(self._pointer.x, self._pointer.y);
+                        self._view(self._offset);
+                    }
+                } else if (e.which === 46) { // delete
+                    self._lines[self._pointer.y] = line.slice(0, self._pointer.x) +
+                        line.slice(self._pointer.x+1, line.length);
+                    self._draw_cursor_line();
+                } else if (e.which === 13) { // enter
+                    var rest = line.slice(self._pointer.x);
+                    self._lines[self._pointer.y] = line.slice(0, self._pointer.x);
+                    self._lines = self._lines.slice(0, self._pointer.y+1).
+                        concat([rest]).concat(self._lines.slice(self._pointer.y+1));
+                    self._set_pointer(0, self._pointer.y+1);
+                    self._view(self._offset);
                 }
             }
         }).bind('click.micro', function(e) {
@@ -299,7 +327,7 @@
                     // need to set them before because they are used by a function
                     this._pointer.x = x;
                     this._pointer.y = y;
-                    this._draw_pointer_line();
+                    this._draw_cursor_line();
                 }
             } else {
                 if (this._pointer.x >= this._cols-1) {
@@ -331,20 +359,22 @@
             for (i = 0; i < len; ++i) {
                 this._matrix[n][i].html(this._encode(line[i]));
             }
-            if (this._string_length(line) > this._cols) {
-                this._matrix[n][this._cols-1].html('$');
+            var tabs = line.match(/(\t)/g);
+            tabs = tabs ? tabs.length*3 : 0;
+            if (line.length + tabs > this._cols) {
+                this._matrix[n][this._cols-1-tabs].html('$');
             } else {
                 for (i = line.length; i < this._cols; ++i) {
                     this._matrix[n][i].html('&nbsp');
                 }
             }
         },
-        _draw_pointer_line: function() {
+        _draw_cursor_line: function() {
             var y = this._pointer.y - this._offset;
-            var line = this._lines[y];
+            var line = this._lines[this._pointer.y];
             if (this._pointer.x >= this._cols-1) {
                 if (this._pointer.x > line.length) {
-                    throw "Out of bound in _draw_pointer_line";
+                    throw "Out of bound in _draw_cursor_line";
                 } else {
                     var multiplier = Math.floor(this._pointer.x / (this._cols-1));
                     var start = (this._cols - this._settings.horizontalMoveOffset - 1) *
@@ -354,6 +384,8 @@
                         this._settings.horizontalMoveOffset + 1;
                     this._matrix[y][x_offset].addClass('cursor');
                 }
+            } else {
+                this._draw_line(this._pointer.y, line);
             }
         },
         _view: function(offset) {
@@ -362,10 +394,11 @@
                 var lines = this._lines.slice(offset, offset+this._rows), i;
                 var cursor_y = this._pointer.y-offset;
                 if (lines[cursor_y].length > this._cols && this._pointer.x > this._cols) {
+                    console.log('_view -> x');
                     for (i = 0; i < cursor_y; ++i) {
                         this._draw_line(i, lines[i]);
                     }
-                    // cursor line
+                    this._draw_cursor_line();
                     for (i = cursor_y+1; i < lines.length; ++i) {
                         this._draw_line(i, lines[i]);
                     }

@@ -15,6 +15,9 @@
 .micro .matrix, .micro .matrix .line {
     float: left;
 }
+.micro .matrix .line {
+    height: 14px;
+}
 .micro .line span {
     display: block;
     float: left;
