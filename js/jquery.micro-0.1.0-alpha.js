@@ -13,7 +13,7 @@
  * sprintf.js: Copyright (c) 2007-2013 Alexandru Marasteanu <hello at alexei dot ro>
  * licensed under 3 clause BSD license
  *
- * Date: Mon, 05 Aug 2013 20:14:09 +0000
+ * Date: Sun, 18 Aug 2013 09:31:42 +0000
  */
 
 // Sprintf
@@ -190,59 +190,47 @@
         this._page = 0;
         this._cursor_offset = 0; // when editing longer lines
         var self = this;
-        this._table.on('click', 'span', function() {
-            var $this = $(this);
-            var y = self._offset + $this.parents('.line').index();
-            var old_x = self._pointer.x;
-            var x = $this.index();
-            if (self._cursor_offset > 0) { // long editing mode
-                if (self._pointer.y == y) {
-                    // click on the same line when editing longer line
-                } else {
-                    // different line
-                }
-            } else {
-                if (self._lines[y]) {
-                    if (x > self._lines[y].length) {
-                        x = self._lines[y].length;
-                    }
-                    self._set_pointer(x, y);
-                }
-            }
-        });
         this._input.bind('keydown.micro', function(e) {
             if (self._focus) {
                 var line = self._lines[self._pointer.y];
                 var tabs = (line.match(/(\t)/g) || []).length * 3;
-                console.log('pointer [' + self._pointer.x + ' ' + self._pointer.y + ']');
                 if (e.which === 37) { // left
                     if (self._pointer.x > 0) {
                         self._set_pointer(self._pointer.x-1, self._pointer.y);
                     }
-                    return false;
+                    e.preventDefault();
                 } else if (e.which === 38) { // top
                     if (self._pointer.y > 0) {
                         self._set_pointer(self._pointer.x, self._pointer.y-1);
                     }
-                    return false;
+                    e.preventDefault();
                 } else if (e.which === 39) { // right
-                    if (self._pointer.x < self._lines[self._pointer.y].length) {
+                    if (self._pointer.x < line.length - tabs) {
                         self._set_pointer(self._pointer.x+1, self._pointer.y);
                     }
-                    return false;
+                    e.preventDefault();
                 } else if (e.which === 40) { // down
                     if (self._pointer.y < self._lines.length-1) {
                         self._set_pointer(self._pointer.x, self._pointer.y+1);
                     }
-                    return false;
+                    e.preventDefault();
                 } else if (e.which === 35) { //end
-                    self._set_pointer(self._lines[self._pointer.y].length-tabs, self._pointer.y);
-                    return false;
+                    self._set_pointer(line.length-tabs, self._pointer.y);
+                    e.preventDefault();
                 } else if (e.which === 36) { //home
                     self._set_pointer(0, self._pointer.y);
-                    return false;
+                    e.preventDefault();
                 } else if (e.which === 8) { // backspace
-                    if (self._pointer.x > 0) {
+                    if (self._pointer.x === 0) {
+                        if (self._pointer.y > 0) {
+                            var x = self._lines[self._pointer.y-1].length;
+                            self._lines[self._pointer.y-1] += self._lines[self._pointer.y];
+                            self._lines = self._lines.slice(0, self._pointer.y).
+                                concat(self._lines.slice(self._pointer.y+1));
+                            self._set_pointer(x, self._pointer.y-1);
+                            self._view(self._offset);
+                        }
+                    } else if (self._pointer.x > 0) {
                         var x = self._pointer.x > line.length ? line.length-tabs : self._pointer.x;
                         self._lines[self._pointer.y] = line.slice(0, x-1) +
                             line.slice(x, line.length);
@@ -259,9 +247,18 @@
                         self._view(self._offset);
                     }
                 } else if (e.which === 46) { // delete
-                    self._lines[self._pointer.y] = line.slice(0, self._pointer.x) +
-                        line.slice(self._pointer.x+1, line.length);
-                    self._draw_cursor_line();
+                    if (line.length === self._pointer.x) {
+                        if (self._lines.length > self._pointer.y+1) {
+                            self._lines[self._pointer.y] += self._lines[self._pointer.y+1];
+                            self._lines = self._lines.slice(0, self._pointer.y+1).
+                                concat(self._lines.slice(self._pointer.y+2));
+                            self._view(self._offset);
+                        }
+                    } else {
+                        self._lines[self._pointer.y] = line.slice(0, self._pointer.x) +
+                            line.slice(self._pointer.x+1, line.length);
+                        self._draw_cursor_line();
+                    }
                 } else if (e.which === 13) { // enter
                     var rest = line.slice(self._pointer.x);
                     self._lines[self._pointer.y] = line.slice(0, self._pointer.x);
@@ -270,7 +267,7 @@
                     self._set_pointer(0, self._pointer.y+1);
                     self._view(self._offset);
                 }
-                
+                console.log('pointer [' + self._pointer.x + ' ' + self._pointer.y + ']');
             }
         }).bind('keypress.micro', function(e) {
             if (!e.ctrlKey) {
@@ -282,15 +279,51 @@
         $(document).bind('click.micro', function(e) {
             var maybe_micro = $(e.target).parents('.micro');
             if (maybe_micro.length) {
-                maybe_micro.data('micro').focus(true);
+                maybe_micro.data('micro').focus();
             } else {
-                self.focus(false);
+                self.blur();
             }
         });
-        this.focus(settings.enabled);
+        this._table.on('click', 'span', function() {
+            var $this = $(this);
+            var y = self._offset + $this.parents('.line').index();
+            var old_x = self._pointer.x;
+            var old_y = self._pointer.y;
+            var x = $this.index();
+            var line = self._lines[self._pointer.y];
+            var start = self._get_cursor_offset();
+            if (start > 0 && self._pointer.y == y) {
+                // click on the same line when editing longer line
+                var tabs = (line.match(/(\t)/g) || []).length * 3;
+                var file_x = start+x-1-tabs;
+                if (file_x > line.length-tabs) {
+                    file_x = line.length-tabs;
+                }
+                self._set_pointer(file_x, y);
+            } else {
+                if (self._cursor_offset > 0 && self._pointer.y != y) {
+                    // redraw old long-line-mode line
+                    self._draw_line(self._pointer.y - self._offset, line);
+                }
+                if (self._lines[y]) {
+                    if (x > self._lines[y].length) {
+                        x = self._lines[y].length;
+                    }
+                    self._set_pointer(x, y);
+                }
+            }
+        });
+        if (settings.enabled) {
+            this.focus();
+        } else {
+            this.blur();
+        }
     }
     // -----------------------------------------------------------------------
     micro.prototype = {
+        // ---------------------------------------------------------------------
+        // :: Insert text in a place of the editor
+        // ---------------------------------------------------------------------
         insert: function(string) {
             var lines = string.split('\n');
             var line = this._lines[this._pointer.y];
@@ -309,22 +342,42 @@
                                   this._pointer.y+lines.length-1);
             }
         },
-        focus: function(toggle) {
-            if (toggle === true || typeof toggle === 'undefined') {
-                this._focus = true;
-                this._table.find('.inactive').removeClass('inactive').css({
-                    width: '',
-                    height: ''
-                });
-                this._input.focus();
-            } else {
-                this._focus = false;
-                this._table.find('.cursor').addClass('inactive').css({
-                    width: this._letter.width-2,
-                    height: this._letter.height-2
-                });
-            }
+        // ---------------------------------------------------------------------
+        // :: Set Editor focus
+        // ---------------------------------------------------------------------
+        focus: function() {
+            this._focus = true;
+            this._table.find('.inactive').removeClass('inactive').css({
+                width: '',
+                height: ''
+            });
+            this._input.focus();
         },
+        // ---------------------------------------------------------------------
+        // :: Get Editor out of Focus
+        // ---------------------------------------------------------------------
+        blur: function() {
+            this._focus = false;
+            this._table.find('.cursor').addClass('inactive').css({
+                width: this._letter.width-2,
+                height: this._letter.height-2
+            });
+        },
+        // ---------------------------------------------------------------------
+        // :: Return number of colums in editor
+        // ---------------------------------------------------------------------
+        cols: function() {
+            return this._cols;
+        },
+        // ---------------------------------------------------------------------
+        // :: Return number of rows in editor
+        // ---------------------------------------------------------------------
+        rows: function() {
+            return this._rows;
+        },
+        // ---------------------------------------------------------------------
+        // :: Remove everything that was created by editor
+        // ---------------------------------------------------------------------
         destroy: function() {
             this._root.removeData('micro').removeClass('micro');
             this._table.remove();
@@ -334,7 +387,11 @@
             this._message.remove();
             $(document).unbind('.micro');
         },
+        // ---------------------------------------------------------------------
+        // :: Refresh the editor, should be done when edit change it's size
+        // ---------------------------------------------------------------------
         refresh: function() {
+            this._letter = this._calculate_letter_size();
             this._rows = Math.floor(this._root.height() / this._letter.height) - 4;
             this._cols = Math.floor(this._root.width() / this._letter.width);
             this._matrix = [];
@@ -349,15 +406,26 @@
             }
             return this;
         },
-        text: function() {
+        // ---------------------------------------------------------------------
+        // :: Set content of editor with text
+        // ---------------------------------------------------------------------
+        set: function(text) {
+            this._lines = text.split('\n');
+            this._set_pointer(0, 0);
+            this._view(0);
+        },
+        // ---------------------------------------------------------------------
+        // :: get content of the editor
+        // ---------------------------------------------------------------------
+        get: function() {
             return this._lines.join('\n');
         },
-        page: function() {
-            return Math.floor((this._offset + this._settings.verticalMoveOffset) / this._rows);
-        },
+        // ---------------------------------------------------------------------
+        // :: Set the cursor to be in position of a file
+        // ---------------------------------------------------------------------
         _set_pointer: function(x, y) {
             if (y >= this._lines.length) {
-                throw "Out of band";
+                throw "[micro::_set_pointer]: Out of band";
             }
             this._table.find('.cursor').removeClass('cursor');
             var cursor_offset = Math.floor(this._rows / 2);
@@ -382,13 +450,11 @@
             }
             var tabs = (this._lines[y].match(/(\t)/g) || []).length * 3;
             if (x+tabs >= this._cols-1) {
-                console.log(1);
                 this._pointer.x = x;
                 this._pointer.y = y;
                 this._draw_cursor_line();
                 /*
                 if (x+tabs > this._lines[y].length) {
-                    console.log(2);
                     // move to last character, happend if you are in longer line and
                     // move cursor up or down to shorter line
                     this._set_pointer(this._lines[y].length, y);
@@ -399,7 +465,6 @@
                     this._draw_cursor_line();
                 }*/
             } else {
-                console.log(3);
                 if (this._pointer.x+tabs >= this._cols-1) {
                     this._draw_line(this._pointer.y-this._offset, this._lines[this._pointer.y]);
                 }
@@ -412,10 +477,16 @@
             this._pointer.x = x;
             this._pointer.y = y;
         },
+        // ---------------------------------------------------------------------
+        // :: Encode html
+        // ---------------------------------------------------------------------
         _encode: function(string) {
             return string.replace(' ', '&nbsp;').
                 replace('\t', str_repeat('&nbsp;', this._settings.tabStop));
         },
+        // ---------------------------------------------------------------------
+        // :: Draw line in place n in editor (n is between 0 and rows number)
+        // ---------------------------------------------------------------------
         _draw_line: function(n, line) {
             var len = line.length > this._cols ? this._cols : line.length, i;
             for (i = 0; i < len; ++i) {
@@ -436,28 +507,40 @@
                 }
             }
         },
+        // ---------------------------------------------------------------------
+        // :: Helper function that return offset in long line edit mode
+        // ---------------------------------------------------------------------
+        _get_cursor_offset: function() {
+            var line =  this._lines[this._pointer.y];
+            var tabs = (line.match(/(\t)/g) || []).length * 3;
+            var multiplier = Math.floor((this._pointer.x+tabs) / (this._cols-1));
+            return (this._cols - this._settings.horizontalMoveOffset - 1) * multiplier;
+        },
+        // ---------------------------------------------------------------------
+        // :: Draw line in place of the cursor, if pointer.x is smaller then
+        // :: number of columns then draw normal line
+        // ---------------------------------------------------------------------
         _draw_cursor_line: function() {
             var y = this._pointer.y - this._offset;
             var line = this._lines[this._pointer.y];
             var tabs = (line.match(/(\t)/g) || []).length * 3;
             if (this._pointer.x+tabs >= this._cols-1) {
                 if (this._pointer.x+tabs > line.length) {
-                    throw "Out of bound in _draw_cursor_line";
+                    throw "[micro::_draw_cursor_line]: Out of bound";
                 } else {
-                    var multiplier = Math.floor((this._pointer.x+tabs) / (this._cols-1));
-                    var start = (this._cols - this._settings.horizontalMoveOffset - 1) *
-                        multiplier;
+                    var start = this._get_cursor_offset();
                     this._draw_line(y, '$' + line.substring(start, start+this._cols));
-                    var x_offset = ((this._pointer.x+tabs) % (this._cols-1)) +
+                    var x = ((this._pointer.x+tabs) % (this._cols-1)) +
                         this._settings.horizontalMoveOffset + 1;
-                    this._cursor_offset = this._settings.horizontalMoveOffset * multiplier;
-                    console.log('offset: ' + this._cursor_offset);
-                    this._matrix[y][x_offset].addClass('cursor');
+                    this._matrix[y][x].addClass('cursor');
                 }
             } else {
-                this._draw_line(this._pointer.y-this._offset, line);
+                this._draw_line(y, line);
             }
         },
+        // ---------------------------------------------------------------------
+        // :: Draw file in editor starting from y offset
+        // ---------------------------------------------------------------------
         _view: function(offset) {
             if (this._lines) {
                 this._offset = offset;
@@ -483,27 +566,45 @@
             }
             return this;
         },
+        // ---------------------------------------------------------------------
+        // :: Return version
+        // ---------------------------------------------------------------------
         version: function() {
             return '0.1.0-alpha';
         },
+        // ---------------------------------------------------------------------
+        // :: Set file name in top title bar
+        // ---------------------------------------------------------------------
         _set_file_name: function(fname) {
             var text = '  jQuery Micro ' + this.version();
             text += str_repeat(' ', 30-text.length) + $.micro.strings.file + ': ' + fname;
             this._title.html(text.replace(/ /g, '&nbsp;'));
         },
+        // ---------------------------------------------------------------------
+        // :: Print message in bottom message box
+        // ---------------------------------------------------------------------
         message: function(string) {
             this._message.text(string);
         },
-        open: function(fname) {
+        // ---------------------------------------------------------------------
+        // :: Open a file using ajax
+        // ---------------------------------------------------------------------
+        open: function(fname, callback) {
             var self = this;
             $.get(fname, function(text) {
                 self._set_file_name(fname);
                 self._lines = text.split('\n');
                 self._view(0);
                 self._set_pointer(0, 0);
+                if (typeof callback === 'function') {
+                    callback();
+                }
             });
             return this;
         },
+        // ---------------------------------------------------------------------
+        // :: Calculate size (in pixels) of single character
+        // ---------------------------------------------------------------------
         _calculate_letter_size: function() {
             var $temp = $('<div class="micro"><div><span>&nbsp;</span></div></div>').
                 appendTo('body');
@@ -541,10 +642,15 @@
             var args = Array.prototype.slice.call(arguments);
             args.shift();
             if (arg[0] !== '_' && typeof $.micro.fn[arg] === 'function') {
-                return $.each(this, function() {
+                if (this.length == 1) {
                     var micro = $(this).data('micro');
-                    $.micro.fn[arg].apply(micro, args);
-                });
+                    return $.micro.fn[arg].apply(micro, args);
+                } else {
+                    return $.each(this, function() {
+                        var micro = $(this).data('micro');
+                        $.micro.fn[arg].apply(micro, args);
+                    });
+                }
             } else {
                 return this;
             }

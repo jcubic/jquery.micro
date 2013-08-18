@@ -16,7 +16,10 @@ $(function() {
         width: 500,
         height: 300
     });
-    $('#editor').micro('open', 'js/jquery.micro-src.js');
+    $('#editor').micro('open', 'js/jquery.micro-src.js', function() {
+        $('#editor').data('micro')._set_pointer(68, 24);
+    });
+    
 });
     </script>
 </head>
