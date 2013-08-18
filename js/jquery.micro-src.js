@@ -267,6 +267,16 @@
                     self._set_pointer(0, self._pointer.y+1);
                     self._view(self._offset);
                 }
+                if (e.ctrlKey) {
+                    if (e.which === 86) { // CTRL+V
+                        self._clipboard.val('').focus();
+                        setTimeout(function() {
+                            self.insert(self._clipboard.val())
+                            self._clipboard.val('');
+                            self._input.focus();
+                        }, 100);
+                    }
+                }
                 console.log('pointer [' + self._pointer.x + ' ' + self._pointer.y + ']');
             }
         }).bind('keypress.micro', function(e) {
@@ -328,18 +338,19 @@
             var lines = string.split('\n');
             var line = this._lines[this._pointer.y];
             var rest = line.slice(this._pointer.x);
-            console.log(this._pointer.x + ' ' + line.slice(0, this._pointer.x));
             this._lines[this._pointer.y] = line.slice(0, this._pointer.x) + lines[0];
             if (lines.length == 1) {
                 this._lines[this._pointer.y] += rest;
                 this._set_pointer(this._pointer.x+string.length, this._pointer.y);
                 this._draw_cursor_line();
             } else {
+                lines[0] = line.slice(0, this._pointer.x) + lines[0];
+                var x = lines[lines.length-1].length;
                 lines[lines.length-1] += rest;
-                this._lines = this._lines.slice(0, this._pointer.y).
-                    contac(lines.slice(1)).concat(this._lines.slice(this._pointer.y));
-                this._set_pointer(lines[lines.length-1].length,
-                                  this._pointer.y+lines.length-1);
+                this._lines = this._lines.slice(0, this._pointer.y-1).
+                    concat(lines).concat(this._lines.slice(this._pointer.y+1));
+                this._set_pointer(x, this._pointer.y+lines.length-2);
+                this._view(this._offset);
             }
         },
         // ---------------------------------------------------------------------
