@@ -151,6 +151,7 @@
 })(typeof exports != "undefined" ? exports : window);
 
 (function($, undefined) {
+    var FOOTER_DEFAULT = 1;
     // -----------------------------------------------------------------------
     // :: Return string repeated n times
     // -----------------------------------------------------------------------
@@ -183,6 +184,8 @@
         this._pointer = {x:0, y:0};
         this._table.appendTo(this._root);
         this._footer = $('<div/>').addClass('footer').appendTo(this._root);
+        this._footer_line_1 = $('<div/>').addClass('line1').appendTo(this._footer);
+        this._footer_line_2 = $('<div/>').addClass('line2').appendTo(this._footer);
         this._message = $('<div/>').addClass('message').append('<span/>').
             appendTo(this._root).find('span');
         this._lines = [''];
@@ -190,6 +193,7 @@
         this._page = 0;
         this._cursor_offset = 0; // when editing longer lines
         var self = this;
+        this._print_footer_keys(FOOTER_DEFAULT);
         this._input.bind('keydown.micro', function(e) {
             if (self._focus) {
                 var line = self._lines[self._pointer.y];
@@ -331,6 +335,54 @@
     }
     // -----------------------------------------------------------------------
     micro.prototype = {
+        _print_footer_line: function(keys, footer_line) {
+            var self = this;
+            var size = Math.round(this._cols / keys.length) - 3;
+            $.each(keys, function(i, key) {
+                $('<span>' + key[0] + '</span>').addClass('key').
+                    appendTo(footer_line);
+                var desc;
+                if (key[1].length > size) {
+                    desc = key[1].substring(0, size);
+                } else if (key[1].length < size) {
+                    desc = key[1] + str_repeat(' ', size-key[1].length);
+                } else {
+                    desc = key[1];
+                }
+                $('<span>' + self._encode(' ' + desc) + '</span>').
+                    appendTo(footer_line);
+            });
+        },
+        _print_footer_keys: function(footer) {
+            var line_1, line_2;
+            switch(footer) {
+            case FOOTER_DEFAULT:
+                line_1 = [
+                    ['^G', $.micro.strings.get_help],
+                    ['^O', $.micro.strings.write_out],
+                    ['^R', $.micro.strings.read_file],
+                    ['^Y', $.micro.strings.prev_page],
+                    ['^K', $.micro.strings.cut_text],
+                    ['^C', $.micro.strings.cur_pos]
+                ];
+                line_2 = [
+                    ['^X', $.micro.strings.exit],
+                    ['^J', $.micro.strings.justify],
+                    ['^W', $.micro.strings.where_is],
+                    ['^V', $.micro.strings.next_page],
+                    ['^U', $.micro.strings.uncut_text],
+                    ['^T', $.micro.strings.to_spell]
+                ];
+                break;
+            }
+            var self = this;
+            if (line_1) {
+                this._print_footer_line(line_1, this._footer_line_1);
+            }
+            if (line_2) {
+                this._print_footer_line(line_2, this._footer_line_2);
+            }
+        },
         // ---------------------------------------------------------------------
         // :: Insert text in a place of the editor
         // ---------------------------------------------------------------------
@@ -492,8 +544,8 @@
         // :: Encode html
         // ---------------------------------------------------------------------
         _encode: function(string) {
-            return string.replace(' ', '&nbsp;').
-                replace('\t', str_repeat('&nbsp;', this._settings.tabStop));
+            return string.replace(/ /g, '&nbsp;').
+                replace(/\t/g, str_repeat('&nbsp;', this._settings.tabStop));
         },
         // ---------------------------------------------------------------------
         // :: Draw line in place n in editor (n is between 0 and rows number)
@@ -603,7 +655,7 @@
         open: function(fname, callback) {
             var self = this;
             $.get(fname, function(text) {
-                self._set_file_name(fname);
+                self._set_file_name(fname.replace(/.*\//, ''));
                 self._lines = text.split('\n');
                 self._view(0);
                 self._set_pointer(0, 0);
@@ -640,9 +692,21 @@
         },
         // strings use by editor, can be translated
         strings: {
-            file: 'File',
-            read: 'Read %s Lines',
-            chr: 'line %d/%d (%d%%), col %d/%d (%d%%), char %d/%d (%d%%)'
+            file:       'File',
+            read:       'Read %s Lines',
+            chr:        'line %d/%d (%d%%), col %d/%d (%d%%), char %d/%d (%d%%)',
+            get_help:   'Get Help',
+            exit:       'Exit',
+            write_out:  'WriteOut',
+            justify:    'Justify',
+            read_file:  'Read File',
+            where_is:   'Where is',
+            prev_page:  'Prev Page',
+            next_page:  'Next Page',
+            cut_text:   'Cut Text',
+            uncut_text: 'Uncut Text',
+            cur_pos:    'Cur Pos',
+            to_spell:   'To Speel'
         },
         init: micro,
         fn: micro.prototype
