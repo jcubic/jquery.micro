@@ -11,6 +11,10 @@
 .micro .title, .micro .footer .key, .micro .message span, .micro .cursor {
     background-color: #fff;
     color: #000;
+    padding-bottom: 2px;
+}
+.micro .cursor.inactive {
+    padding-bottom: 0px;
 }
 .micro .footer {
     position: absolute;
