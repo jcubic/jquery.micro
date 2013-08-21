@@ -1,6 +1,6 @@
 /**@license
  *
- * jQuery Micro version 0.1.0-alpha
+ * jQuery Micro version 0.1.0
  *
  * Pico/Nano like editor for jquery
  *
@@ -13,7 +13,7 @@
  * sprintf.js: Copyright (c) 2007-2013 Alexandru Marasteanu <hello at alexei dot ro>
  * licensed under 3 clause BSD license
  *
- * Date: Sun, 18 Aug 2013 12:42:38 +0000
+ * Date: Wed, 21 Aug 2013 17:38:22 +0000
  */
 
 // Sprintf
@@ -203,7 +203,7 @@
                         self._set_pointer(self._pointer.x-1, self._pointer.y);
                     }
                     e.preventDefault();
-                } else if (e.which === 38) { // top
+                } else if (e.which === 38) { // up
                     if (self._pointer.y > 0) {
                         self._set_pointer(self._pointer.x, self._pointer.y-1);
                     }
@@ -219,7 +219,7 @@
                     }
                     e.preventDefault();
                 } else if (e.which === 35) { //end
-                    self._set_pointer(line.length-tabs, self._pointer.y);
+                    self._set_pointer(line.length, self._pointer.y);
                     e.preventDefault();
                 } else if (e.which === 36) { //home
                     self._set_pointer(0, self._pointer.y);
@@ -279,9 +279,23 @@
                             self._clipboard.val('');
                             self._input.focus();
                         }, 100);
+                    } else if (e.which === 79) { // CTRL+O
+                        if (typeof self._settings.save === 'function') {
+                            self._settings.save.apply(self._root);
+                        } else {
+                            self.message('[ ' + $.micro.strings.no_save + ' ]');
+                        }
+                        e.preventDefault();
                     }
                 }
-                console.log('pointer [' + self._pointer.x + ' ' + self._pointer.y + ']');
+                if (!self._settings.cursorPosition) {
+                    if (e.ctrlKey && e.which === 67) { // CTRL+C
+                        self._print_cur_position();
+                    } else {
+                        self.message('');
+                    }
+                }
+                //console.log('pointer [' + self._pointer.x + ' ' + self._pointer.y + ']');
             }
         }).bind('keypress.micro', function(e) {
             if (!e.ctrlKey) {
@@ -335,6 +349,9 @@
     }
     // -----------------------------------------------------------------------
     micro.prototype = {
+        // ---------------------------------------------------------------------
+        // :: Print line of keys in the footer
+        // ---------------------------------------------------------------------
         _print_footer_line: function(keys, footer_line) {
             var self = this;
             var size = Math.round(this._cols / keys.length) - 3;
@@ -353,6 +370,9 @@
                     appendTo(footer_line);
             });
         },
+        // ---------------------------------------------------------------------
+        // :: Print footer page with list of keys
+        // ---------------------------------------------------------------------
         _print_footer_keys: function(footer) {
             var line_1, line_2;
             switch(footer) {
@@ -456,6 +476,9 @@
         refresh: function() {
             this._letter = this._calculate_letter_size();
             this._rows = Math.floor(this._root.height() / this._letter.height) - 4;
+            //if (this._settings.cursorPosition) {
+                //--this._rows;
+            //}
             this._cols = Math.floor(this._root.width() / this._letter.width);
             this._matrix = [];
             this._table.empty();
@@ -484,6 +507,34 @@
             return this._lines.join('\n');
         },
         // ---------------------------------------------------------------------
+        // :: Print text in message box about cursor position
+        // ---------------------------------------------------------------------
+        _print_cur_position: function() {
+            var chars = 0;
+            var all_chars = 0;
+            var self = this;
+            $.each(this._lines, function(i, line) {
+                if (i < self._pointer.y) {
+                    chars += line.length;
+                } else if (i == self._pointer.y) {
+                    chars += self._pointer.x;
+                }
+                all_chars += line.length;
+            });
+            var line = this._lines[this._pointer.y];
+            var message = sprintf($.micro.strings.chr,
+                                  this._pointer.y+1,
+                                  this._lines.length,
+                                  (this._pointer.y+1)*100/this._lines.length,
+                                  this._pointer.x+1,
+                                  line.length,
+                                  (this._pointer.x+1)*100/line.length,
+                                  chars,
+                                  all_chars,
+                                  chars*100/all_chars);
+            this.message('[ ' + message + ' ]');
+        },
+        // ---------------------------------------------------------------------
         // :: Set the cursor to be in position of a file
         // ---------------------------------------------------------------------
         _set_pointer: function(x, y) {
@@ -491,10 +542,14 @@
                 throw "[micro::_set_pointer]: Out of band";
             }
             this._table.find('.cursor').removeClass('cursor');
+            // old cursor in long line
+            if (this._pointer.x > this._cols && x != this._pointer.x) {
+                this._draw_line(this._pointer.y-this._offset,
+                                this._lines[this._pointer.y]);
+            }
             var cursor_offset = Math.floor(this._rows / 2);
             var cursor_y;
             var offset = this._offset + this._rows - cursor_offset;
-            this.message('[ line ' + (y+1) + '/' + this._lines.length + ' ]');
             if (y-this._offset >= this._rows) {
                 cursor_y = y - offset;
                 if (this._offset !== offset) {
@@ -539,6 +594,9 @@
             }
             this._pointer.x = x;
             this._pointer.y = y;
+            if (this._settings.cursorPosition) {
+                this._print_cur_position();
+            }
         },
         // ---------------------------------------------------------------------
         // :: Encode html
@@ -584,6 +642,7 @@
         // :: number of columns then draw normal line
         // ---------------------------------------------------------------------
         _draw_cursor_line: function() {
+            //console.log(Error().stack);
             var y = this._pointer.y - this._offset;
             var line = this._lines[this._pointer.y];
             var tabs = (line.match(/(\t)/g) || []).length * 3;
@@ -610,7 +669,7 @@
                 var lines = this._lines.slice(offset, offset+this._rows), i;
                 var cursor_y = this._pointer.y-offset;
                 if (lines[cursor_y].length > this._cols && this._pointer.x > this._cols) {
-                    console.log('_view -> x');
+                    //console.log('_view -> x');
                     for (i = 0; i < cursor_y; ++i) {
                         this._draw_line(i, lines[i]);
                     }
@@ -633,7 +692,7 @@
         // :: Return version
         // ---------------------------------------------------------------------
         version: function() {
-            return '0.1.0-alpha';
+            return '0.1.0';
         },
         // ---------------------------------------------------------------------
         // :: Set file name in top title bar
@@ -647,7 +706,7 @@
         // :: Print message in bottom message box
         // ---------------------------------------------------------------------
         message: function(string) {
-            this._message.text(string);
+            this._message.html(this._encode(string));
         },
         // ---------------------------------------------------------------------
         // :: Open a file using ajax
@@ -685,6 +744,9 @@
         defaults: {
             enabled: true,
             tabStop: 4,
+            cursorPosition: false,
+            save: null,
+            exit: null,
             width: '100%',
             height: '400px',
             verticalMoveOffset: 9, // when you move cursor out of editor verticaly
@@ -695,6 +757,7 @@
             file:       'File',
             read:       'Read %s Lines',
             chr:        'line %d/%d (%d%%), col %d/%d (%d%%), char %d/%d (%d%%)',
+            no_save:    'You need to provide save function',
             get_help:   'Get Help',
             exit:       'Exit',
             write_out:  'WriteOut',

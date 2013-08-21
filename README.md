@@ -3,7 +3,7 @@
 | '_ ` _ \| |/ __| '__/ _ \
 | | | | | | | (__| | | (_) |
 |_| |_| |_|_|\___|_|  \___/
-               version 0.1.0-alpha
+               version 0.1.0
 
 Pico/Nano like editor for jquery.</pre>
 
