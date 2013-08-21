@@ -4,7 +4,7 @@
     "description": "jQuery Micro is Pico/Nano like editor",
     "version": "{{V}}",
     "keywords": [
-        "editor", "terminal", "console", "keyboard", "type", "input", "ui"
+        "editor", "terminal", "console", "keyboard", "type", "input", "ui", "widget"
     ],
     "author": {
         "name": "Jakub Jankiewicz",
