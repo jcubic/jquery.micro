@@ -18,7 +18,7 @@
     "homepage": "http://micro.jcubic.pl/",
     "demo": "http://micro.jcubic.pl/#demo",
     "bugs": "https://github.com/jcubic/micro/issues",
-    "download": "http://micro.jcubic.pl/js/jquery.micro-0.1.0.js",
+    "download": "https://github.com/jcubic/jquery.micro/archive/0.1.0.zip",
     "dependencies": {
         "jquery": ">=1.5"
     }
