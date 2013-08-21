@@ -65,7 +65,7 @@
 .micro .message {
     position: absolute;
     left: 50%;
-    bottom: 34px;
+    bottom: 27px; /* 34px; */
 }
 .micro .message span {
     height: 14px;
