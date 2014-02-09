@@ -1,6 +1,6 @@
 /**@license
  *
- * jQuery Micro version 0.1.0
+ * jQuery Micro version 0.1.1
  *
  * Pico/Nano like editor for jquery
  *
@@ -13,7 +13,7 @@
  * sprintf.js: Copyright (c) 2007-2013 Alexandru Marasteanu <hello at alexei dot ro>
  * licensed under 3 clause BSD license
  *
- * Date: Wed, 21 Aug 2013 17:38:22 +0000
+ * Date: Sun, 09 Feb 2014 15:45:52 +0000
  */
 
 // Sprintf
@@ -197,31 +197,31 @@
         this._input.bind('keydown.micro', function(e) {
             if (self._focus) {
                 var line = self._lines[self._pointer.y];
-                var tabs = (line.match(/(\t)/g) || []).length * 3;
-                if (e.which === 37) { // left
+                var tabs = self._tabs_count(line);
+                if (e.which === 37) { // LEFT
                     if (self._pointer.x > 0) {
                         self._set_pointer(self._pointer.x-1, self._pointer.y);
                     }
                     e.preventDefault();
-                } else if (e.which === 38) { // up
+                } else if (e.which === 39) { // RIGHT
+                    if (self._pointer.x < line.length) {
+                        self._set_pointer(self._pointer.x+1, self._pointer.y);
+                    }
+                    e.preventDefault();
+                } else if (e.which === 38) { // UP
                     if (self._pointer.y > 0) {
                         self._set_pointer(self._pointer.x, self._pointer.y-1);
                     }
                     e.preventDefault();
-                } else if (e.which === 39) { // right
-                    if (self._pointer.x < line.length - tabs) {
-                        self._set_pointer(self._pointer.x+1, self._pointer.y);
-                    }
-                    e.preventDefault();
-                } else if (e.which === 40) { // down
+                } else if (e.which === 40) { // DOWN
                     if (self._pointer.y < self._lines.length-1) {
                         self._set_pointer(self._pointer.x, self._pointer.y+1);
                     }
                     e.preventDefault();
-                } else if (e.which === 35) { //end
+                } else if (e.which === 35) { // END
                     self._set_pointer(line.length, self._pointer.y);
                     e.preventDefault();
-                } else if (e.which === 36) { //home
+                } else if (e.which === 36) { // HOME
                     self._set_pointer(0, self._pointer.y);
                     e.preventDefault();
                 } else if (e.which === 8) { // backspace
@@ -322,7 +322,7 @@
             var start = self._get_cursor_offset();
             if (start > 0 && self._pointer.y == y) {
                 // click on the same line when editing longer line
-                var tabs = (line.match(/(\t)/g) || []).length * 3;
+                var tabs = self._tabs_count(line);
                 var file_x = start+x-1-tabs;
                 if (file_x > line.length-tabs) {
                     file_x = line.length-tabs;
@@ -476,9 +476,9 @@
         refresh: function() {
             this._letter = this._calculate_letter_size();
             this._rows = Math.floor(this._root.height() / this._letter.height) - 4;
-            //if (this._settings.cursorPosition) {
-                //--this._rows;
-            //}
+            /*if (this._settings.cursorPosition) {
+                --this._rows;
+            }*/
             this._cols = Math.floor(this._root.width() / this._letter.width);
             this._matrix = [];
             this._table.empty();
@@ -527,8 +527,8 @@
                                   this._lines.length,
                                   (this._pointer.y+1)*100/this._lines.length,
                                   this._pointer.x+1,
-                                  line.length,
-                                  (this._pointer.x+1)*100/line.length,
+                                  line.length+1,
+                                  (this._pointer.x+1)*100/(line.length+1),
                                   chars,
                                   all_chars,
                                   chars*100/all_chars);
@@ -539,18 +539,58 @@
         // ---------------------------------------------------------------------
         _set_pointer: function(x, y) {
             if (y >= this._lines.length) {
-                throw "[micro::_set_pointer]: Out of band";
+                throw new Error("[micro::_set_pointer]: Y out of band (" + y + "/" +
+                                this._lines.length + ")");
             }
             this._table.find('.cursor').removeClass('cursor');
-            // old cursor in long line
-            if (this._pointer.x > this._cols && x != this._pointer.x) {
-                this._draw_line(this._pointer.y-this._offset,
-                                this._lines[this._pointer.y]);
+            var line = this._lines[y];
+            var old_line = this._lines[this._pointer.y];
+            var tabs = this._tabs_count(line);
+            var old_tabs = this._tabs_count(old_line);
+            
+            if (y != this._pointer.y) {
+                // restore line if old cursor in long line
+                if (this._pointer.x >= this._cols-old_tabs-1) {
+                    this._draw_line(this._pointer.y-this._offset,
+                                    this._lines[this._pointer.y]);
+                }
+                /*
+                // fix position when there're tabs
+                var before_tabs = (line.substr(0, x+1).match(/(\t)/g) || []).length;
+                var before_old_tabs = (old_line.substr(0, this._pointer.x+1).match(/(\t)/g) || []).length;
+                if (before_tabs != before_old_tabs) {
+                    console.log('----------------');
+                    console.log('x: ' + x);
+                    console.log('new> ' + before_tabs);
+                    console.log('old> ' + before_old_tabs);
+                    if (line[x] == '\t') {
+                        before_old_tabs += 1;
+                    }
+                    if (old_line[this._pointer.x] == '\t') {
+                        before_tabs -= 1;
+                    }
+                    var diff = Math.abs(before_old_tabs-before_tabs)*3;
+                    if (before_old_tabs > before_tabs) {
+                        console.log('x+=diff');
+                        x+=diff;
+                    } else {
+                        console.log('x-=diff');
+                        x-=diff;
+                    }
+                    console.log('x: ' + x);
+                }
+                */
+            }
+            if (x > line.length) { // fix position if X out of Band
+                x = line.length;
+            } else if (x < 0) {
+                x = 0;
             }
             var cursor_offset = Math.floor(this._rows / 2);
             var cursor_y;
             var offset = this._offset + this._rows - cursor_offset;
             if (y-this._offset >= this._rows) {
+                // change page
                 cursor_y = y - offset;
                 if (this._offset !== offset) {
                     this._pointer.x = x;
@@ -566,7 +606,6 @@
             } else {
                 cursor_y = y - offset + cursor_offset + 1;
             }
-            var tabs = (this._lines[y].match(/(\t)/g) || []).length * 3;
             if (x+tabs >= this._cols-1) {
                 this._pointer.x = x;
                 this._pointer.y = y;
@@ -609,11 +648,11 @@
         // :: Draw line in place n in editor (n is between 0 and rows number)
         // ---------------------------------------------------------------------
         _draw_line: function(n, line) {
-            var len = line.length > this._cols ? this._cols : line.length, i;
+            var len = (line.length > this._cols ? this._cols : line.length), i;
             for (i = 0; i < len; ++i) {
                 this._matrix[n][i].html(this._encode(line[i]));
             }
-            var tabs = (line.match(/(\t)/g) || []).length * 3;
+            var tabs = this._tabs_count(line);
             if (line.length + tabs > this._cols) {
                 this._matrix[n][this._cols-1-tabs].html('$');
                 if (tabs > 0) {
@@ -633,29 +672,32 @@
         // ---------------------------------------------------------------------
         _get_cursor_offset: function() {
             var line =  this._lines[this._pointer.y];
-            var tabs = (line.match(/(\t)/g) || []).length * 3;
+            var tabs = this._tabs_count(line);
             var multiplier = Math.floor((this._pointer.x+tabs) / (this._cols-1));
-            return (this._cols - this._settings.horizontalMoveOffset - 1) * multiplier;
+            var offest = (this._cols - this._settings.horizontalMoveOffset - 1) * multiplier;
+            return offest-tabs;
+        },
+        // ---------------------------------------------------------------------
+        // :: Helper function that return number of characters that can be added
+        // :: when line have tabs
+        // ---------------------------------------------------------------------
+        _tabs_count: function(line) {
+            return (line.match(/(\t)/g) || []).length * 3;
         },
         // ---------------------------------------------------------------------
         // :: Draw line in place of the cursor, if pointer.x is smaller then
         // :: number of columns then draw normal line
         // ---------------------------------------------------------------------
         _draw_cursor_line: function() {
-            //console.log(Error().stack);
             var y = this._pointer.y - this._offset;
             var line = this._lines[this._pointer.y];
-            var tabs = (line.match(/(\t)/g) || []).length * 3;
+            var tabs = this._tabs_count(line);
             if (this._pointer.x+tabs >= this._cols-1) {
-                if (this._pointer.x+tabs > line.length) {
-                    throw "[micro::_draw_cursor_line]: Out of bound";
-                } else {
-                    var start = this._get_cursor_offset();
-                    this._draw_line(y, '$' + line.substring(start, start+this._cols));
-                    var x = ((this._pointer.x+tabs) % (this._cols-1)) +
-                        this._settings.horizontalMoveOffset + 1;
-                    this._matrix[y][x].addClass('cursor');
-                }
+                var start = this._get_cursor_offset();
+                this._draw_line(y, '$' + line.substring(start, start+this._cols));
+                var x = ((this._pointer.x+tabs) % (this._cols-1)) +
+                    this._settings.horizontalMoveOffset + 1;
+                this._matrix[y][x].addClass('cursor');
             } else {
                 this._draw_line(y, line);
             }
@@ -692,7 +734,8 @@
         // :: Return version
         // ---------------------------------------------------------------------
         version: function() {
-            return '0.1.0';
+            var v = '0.1.1';
+            return v.match(/^\{\{V\}\}$/, v) ? '' : v;
         },
         // ---------------------------------------------------------------------
         // :: Set file name in top title bar
