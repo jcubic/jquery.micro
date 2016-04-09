@@ -201,13 +201,19 @@
                 var line = self._lines[self._pointer.y];
                 var tabs = self._tabs_count(line);
                 if (e.which === 37) { // LEFT
+                    var prev_line = self._lines[self._pointer.y-1];
                     if (self._pointer.x > 0) {
                         self._set_pointer(self._pointer.x-1, self._pointer.y);
+                    } else if (self._pointer.x === 0 && prev_line !== undefined) {
+                        self._set_pointer(prev_line.length, self._pointer.y-1);
                     }
                     e.preventDefault();
                 } else if (e.which === 39) { // RIGHT
                     if (self._pointer.x < line.length) {
                         self._set_pointer(self._pointer.x+1, self._pointer.y);
+                    } else if (self._pointer.x === line.length &&
+                               self._lines[self._pointer.y+1] !== undefined) {
+                        self._set_pointer(0, self._pointer.y+1);
                     }
                     e.preventDefault();
                 } else if (e.which === 38) { // UP
@@ -231,8 +237,7 @@
                         if (self._pointer.y > 0) {
                             var x = self._lines[self._pointer.y-1].length;
                             self._lines[self._pointer.y-1] += self._lines[self._pointer.y];
-                            self._lines = self._lines.slice(0, self._pointer.y).
-                                concat(self._lines.slice(self._pointer.y+1));
+                            self._lines.splice(self._pointer.y, 1);
                             self._set_pointer(x, self._pointer.y-1);
                             self._view(self._offset);
                         }
@@ -248,7 +253,7 @@
                             concat(self._lines.slice(self._pointer.y));
                         self._lines[self._pointer.y-1] = prev_line + line;
                         self._pointer.y--;
-                        self._pointer.x = prev_line.length;
+                        self._pointer.x = prev_line.length-1;
                         self._set_pointer(self._pointer.x, self._pointer.y);
                         self._view(self._offset);
                     }
@@ -268,8 +273,7 @@
                 } else if (e.which === 13) { // enter
                     var rest = line.slice(self._pointer.x);
                     self._lines[self._pointer.y] = line.slice(0, self._pointer.x);
-                    self._lines = self._lines.slice(0, self._pointer.y+1).
-                        concat([rest]).concat(self._lines.slice(self._pointer.y+1));
+                    self._lines.splice(self._pointer.y+1, 0, rest);
                     self._set_pointer(0, self._pointer.y+1);
                     self._view(self._offset);
                 }
@@ -302,7 +306,9 @@
         }).bind('keypress.micro', function(e) {
             if (!e.ctrlKey) {
                 var chr = String.fromCharCode(e.which);
-                self.insert(chr);
+                if (chr !== '\r') {
+                    self.insert(chr);
+                }
             }
             e.preventDefault();
         })
@@ -493,7 +499,7 @@
                 }
             }
             if (this._pointer) {
-                this._view(0);
+                self._view(self._offset);
                 this._set_pointer(this._pointer.x, this._pointer.y);
             }
             return this;
@@ -544,7 +550,7 @@
         // :: Set the cursor to be in position of a file
         // ---------------------------------------------------------------------
         _set_pointer: function(x, y) {
-            if (y >= this._lines.length) {
+            if (y >= this._lines.length || y < 0) {
                 throw new Error("[micro::_set_pointer]: Y out of band (" + y + "/" +
                                 this._lines.length + ")");
             }
@@ -552,11 +558,13 @@
             var line = this._lines[y];
             var old_line = this._lines[this._pointer.y];
             var tabs = this._tabs_count(line);
-            var old_tabs = this._tabs_count(old_line);
+            if (old_line) {
+                var old_tabs = this._tabs_count(old_line);
+            }
             
             if (y != this._pointer.y) {
                 // restore line if old cursor in long line
-                if (this._pointer.x >= this._cols-old_tabs-1) {
+                if (old_tabs && this._pointer.x >= this._cols-old_tabs-1) {
                     this._draw_line(this._pointer.y-this._offset,
                                     this._lines[this._pointer.y]);
                 }
