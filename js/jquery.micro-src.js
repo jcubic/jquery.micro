@@ -318,7 +318,6 @@
                         self.message('');
                     }
                 }
-                //console.log('pointer [' + self._pointer.x + ' ' + self._pointer.y + ']');
             }
         }).bind('keypress.micro', function(e) {
             if (!e.ctrlKey) {
@@ -527,7 +526,7 @@
         refresh: function() {
             this.clear();
             if (this._pointer) {
-                this._view(self._offset);
+                this._view(this._offset);
                 this._set_pointer(this._pointer.x, this._pointer.y);
             }
             return this;
@@ -647,6 +646,10 @@
                 cursor_y = y - new_offset;
             } else {
                 cursor_y = y - offset + cursor_offset + 1;
+                if (offset % cursor_offset === 0) {
+                    // because of weird bug that happen when editor have specific height
+                    cursor_y--;
+                }
             }
             if (x+tabs >= this._cols-1) {
                 this._pointer.x = x;
@@ -753,7 +756,6 @@
                 var lines = this._lines.slice(offset, offset+this._rows), i;
                 var cursor_y = this._pointer.y-offset;
                 if (lines[cursor_y].length > this._cols && this._pointer.x > this._cols) {
-                    //console.log('_view -> x');
                     for (i = 0; i < cursor_y; ++i) {
                         this._draw_line(i, lines[i]);
                     }
