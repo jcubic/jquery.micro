@@ -182,15 +182,17 @@
         this._input = $('<input/>').appendTo(this._spacer);
         this._clipboard = $('<textarea/>').addClass('clipboard').appendTo(this._spacer);
         this._table = $('<div/>').addClass('matrix');
+        this._lines = [''];
+        this._unsaved = false;
         this.refresh();
         this._pointer = {x:0, y:0};
+        this._matrix[0][0].addClass('cursor');
         this._table.appendTo(this._root);
         this._footer = $('<div/>').addClass('footer').appendTo(this._root);
         this._footer_line_1 = $('<div/>').addClass('line1').appendTo(this._footer);
         this._footer_line_2 = $('<div/>').addClass('line2').appendTo(this._footer);
         this._message = $('<div/>').addClass('message').append('<span/>').
             appendTo(this._root).find('span');
-        this._lines = [''];
         this._offset = 0;
         this._page = 0;
         this._cursor_offset = 0; // when editing longer lines
@@ -240,6 +242,7 @@
                             self._lines.splice(self._pointer.y, 1);
                             self._set_pointer(x, self._pointer.y-1);
                             self._view(self._offset);
+                            this._unsaved = true;
                         }
                     } else if (self._pointer.x > 0) {
                         var x = self._pointer.x > line.length ? line.length-tabs : self._pointer.x;
@@ -247,6 +250,7 @@
                             line.slice(x, line.length);
                         self._draw_cursor_line();
                         self._set_pointer(x-1, self._pointer.y);
+                        this._unsaved = true;
                     } else {
                         var prev_line = self._lines[self._pointer.y-1];
                         self._lines = self._lines.slice(0, self._pointer.y-1).
@@ -256,6 +260,7 @@
                         self._pointer.x = prev_line.length-1;
                         self._set_pointer(self._pointer.x, self._pointer.y);
                         self._view(self._offset);
+                        this._unsaved = true;
                     }
                 } else if (e.which === 46) { // delete
                     if (line.length === self._pointer.x) {
@@ -264,11 +269,13 @@
                             self._lines = self._lines.slice(0, self._pointer.y+1).
                                 concat(self._lines.slice(self._pointer.y+2));
                             self._view(self._offset);
+                            this._unsaved = true;
                         }
                     } else {
                         self._lines[self._pointer.y] = line.slice(0, self._pointer.x) +
                             line.slice(self._pointer.x+1, line.length);
                         self._draw_cursor_line();
+                        this._unsaved = true;
                     }
                 } else if (e.which === 13) { // enter
                     var rest = line.slice(self._pointer.x);
@@ -276,6 +283,7 @@
                     self._lines.splice(self._pointer.y+1, 0, rest);
                     self._set_pointer(0, self._pointer.y+1);
                     self._view(self._offset);
+                    this._unsaved = true;
                 }
                 if (e.ctrlKey) {
                     if (e.which === 86) { // CTRL+V
@@ -284,14 +292,23 @@
                             self.insert(self._clipboard.val())
                             self._clipboard.val('');
                             self._input.focus();
+                            this._unsaved = true;
                         }, 100);
                     } else if (e.which === 79) { // CTRL+O
                         if (typeof self._settings.save === 'function') {
                             self._settings.save.apply(self._root);
+                            this._unsaved = false;
                         } else {
                             self.message('[ ' + $.micro.strings.no_save + ' ]');
                         }
                         e.preventDefault();
+                    } else if (e.which === 88) { // CTRL+X
+                        /*if (this._unsaved) {
+                            self.message('[ ' + $.micro.strings.unsaved + ' ]');
+                        }*/
+                        if (typeof self._settings.exit === 'function') {
+                            self._settings.exit.apply(self._root);
+                        }
                     }
                 }
                 if (!self._settings.cursorPosition) {
@@ -308,6 +325,7 @@
                 var chr = String.fromCharCode(e.which);
                 if (chr !== '\r') {
                     self.insert(chr);
+                    self._unsaved = true;
                 }
             }
             e.preventDefault();
@@ -474,14 +492,15 @@
             this._table.remove();
             this._input.unbind('.micro');
             this._spacer.remove();
+            this._title.remove();
             this._footer.remove();
-            this._message.remove();
+            this._root.find('.message').remove();
             $(document).unbind('.micro');
         },
         // ---------------------------------------------------------------------
-        // :: Refresh the editor, should be done when edit change it's size
+        // :: Clear the editor
         // ---------------------------------------------------------------------
-        refresh: function() {
+        clear: function(filename) {
             this._letter = this._calculate_letter_size();
             this._rows = Math.floor(this._root.height() / this._letter.height) - 4;
             /*if (this._settings.cursorPosition) {
@@ -498,8 +517,17 @@
                     this._matrix[i][j] = cell;
                 }
             }
+            if (filename) {
+                this._set_file_name('');
+            }
+        },
+        // ---------------------------------------------------------------------
+        // :: Refresh the editor, should be done when edit change it's size
+        // ---------------------------------------------------------------------
+        refresh: function() {
+            this.clear();
             if (this._pointer) {
-                self._view(self._offset);
+                this._view(self._offset);
                 this._set_pointer(this._pointer.x, this._pointer.y);
             }
             return this;
@@ -778,7 +806,7 @@
                 if (typeof callback === 'function') {
                     callback();
                 }
-            });
+            }, 'text');
             return this;
         },
         // ---------------------------------------------------------------------

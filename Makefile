@@ -1,4 +1,4 @@
-VERSION=0.1.3
+VERSION=0.1.4
 JSC=java -jar ~/bin/closure.bin/compiler.jar --js
 SED=sed
 CP=cp
@@ -23,5 +23,5 @@ micro.jquery.json: manifest ~$(VERSION)
 ~$(VERSION):
 	touch ~$(VERSION)
 
-www/Makefile: Makefile www/Makefile.in
-	$(SED) -e "s/{{VERSION}}/$(VERSION)/g" www/Makefile.in > www/Makefile
+www/Makefile: Makefile www/Makefile.in ~$(VERSION)
+	test -d www && $(SED) -e "s/{{VERSION}}/$(VERSION)/g" www/Makefile.in > www/Makefile
